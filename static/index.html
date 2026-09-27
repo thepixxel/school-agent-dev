@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Agent - Personal Class Assistant</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Marked for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Flashcard 3D flip */
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    
+    /* Ultra-sleek margin-aligned scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+    /* Custom select & option dark dropdown styling */
+    select {
+      background-color: #020617;
+      color: #f1f5f9;
+      color-scheme: dark;
+    }
+    select option {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 6px 10px;
+    }
+    select option:hover,
+    select option:focus,
+    select option:checked {
+      background-color: #4f46e5 !important;
+      color: #ffffff !important;
+    }
+
+    .markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: #818cf8; }
+    .markdown-body h2 { font-size: 1.25rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; color: #a5b4fc; }
+    .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .markdown-body ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+    .markdown-body ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+    .markdown-body li { margin-bottom: 0.25rem; }
+    .markdown-body code { background: #1e293b; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; }
+    .markdown-body pre { background: #0f172a; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid #1e293b; }
+    .markdown-body blockquote { border-left: 4px solid #6366f1; padding-left: 1rem; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem; }
+    .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+    .markdown-body th, .markdown-body td { border: 1px solid #334155; padding: 0.5rem; text-align: left; }
+    .markdown-body th { background: #1e293b; }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased selection:bg-indigo-500 selection:text-white bg-slate-950">
+
+  <!-- Main Container -->
+  <div class="flex h-screen overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0">
+      <!-- App Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+            <i class="fa-solid fa-graduation-cap text-lg"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-base leading-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">School Agent</h1>
+            <p class="text-xs text-slate-400">Personal Class AI</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="p-3 space-y-1.5 flex-1 overflow-y-auto">
+        <button onclick="switchTab('chat')" id="nav-chat" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition bg-indigo-600 text-white shadow-sm">
+          <i class="fa-solid fa-comments w-5 text-center"></i>
+          <span>AI Assistant</span>
+        </button>
+
+        <button onclick="switchTab('grades')" id="nav-grades" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-chart-line w-5 text-center text-emerald-400"></i>
+          <span>Grades & Academic Record</span>
+        </button>
+
+        <button onclick="switchTab('deadlines')" id="nav-deadlines" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-calendar-check w-5 text-center text-amber-400"></i>
+          <span>Deadlines & Tasks</span>
+          <span id="badge-deadlines-count" class="ml-auto bg-indigo-500/20 text-indigo-400 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </button>
+
+        <button onclick="switchTab('notes')" id="nav-notes" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-book-open w-5 text-center text-purple-400"></i>
+          <span>Notes & Flashcards</span>
+        </button>
+
+        <button onclick="switchTab('moodle')" id="nav-moodle" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-arrows-rotate w-5 text-center text-orange-400"></i>
+          <span>Moodle Sync Hub</span>
+        </button>
+
+        <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-sliders w-5 text-center"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- Quick Status -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900/50">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+          <span>Gemini AI Status</span>
+          <span id="sidebar-ai-status" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ready
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-500">
+          Model: <span id="sidebar-model-name" class="text-slate-300 font-mono">gemini-3.5-flash-lite</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full bg-slate-950 overflow-hidden relative">
+
+      <!-- ================= 1. TAB: CHAT ASSISTANT ================= -->
+      <section id="tab-chat" class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Chat Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40 backdrop-blur">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Academic Personal Assistant</h2>
+            <p class="text-xs text-slate-400">Context-aware of your classes, grades history, and upcoming deadlines</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="openEmailModal()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg border border-slate-700 flex items-center gap-2 transition">
+              <i class="fa-solid fa-envelope"></i> Draft Email to Prof
+            </button>
+            <button onclick="clearChatHistory()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-800/60 hover:bg-slate-800 rounded-lg border border-slate-700/50 transition">
+              <i class="fa-solid fa-trash-can"></i> Clear
+            </button>
+          </div>
+        </header>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6">
+          <!-- Welcome Message -->
+          <div class="flex items-start space-x-4 max-w-3xl">
+            <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none p-4 text-slate-200 text-sm shadow-md">
+              <p class="font-semibold text-indigo-400 mb-1">Hello! I'm your School Agent assistant. 🎓</p>
+              <p class="text-slate-300 mb-2">I have access to your active courses, Moodle assignments, and grades record. Here are a few things I can do:</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs">
+                <button onclick="sendQuickPrompt('What courses did I take on the 3rd grade and what grades did I get?')" class="text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition flex items-center gap-2">
+                  <i class="fa-solid fa-chart-line text-emerald-400"></i> Summary of my 3rd period grades
+                </button>
+                <button onclick="switchTab('grades')" class="text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition flex items-center gap-2">
+                  <i class="fa-solid fa-graduation-cap text-indigo-400"></i> View Grades Overview Dashboard
+                </button>
+                <button onclick="sendQuickPrompt('Help me create a weekly study schedule based on my assignments.')" class="text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition flex items-center gap-2">
+                  <i class="fa-solid fa-list-check text-purple-400"></i> Plan my weekly study schedule
+                </button>
+                <button onclick="switchTab('deadlines')" class="text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition flex items-center gap-2">
+                  <i class="fa-solid fa-calendar-check text-amber-400"></i> View Deadlines & AI Action Plans
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/60 backdrop-blur">
+          <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex flex-col gap-2">
+            <!-- File preview tag if attached -->
+            <div id="file-attachment-preview" class="hidden flex items-center gap-2 px-3 py-1 bg-indigo-950/60 border border-indigo-700/50 rounded-lg text-xs text-indigo-200 w-max">
+              <i class="fa-solid fa-paperclip"></i>
+              <span id="file-attachment-name">syllabus.pdf</span>
+              <button type="button" onclick="removeAttachedFile()" class="text-indigo-400 hover:text-rose-400 ml-2">
+                <i class="fa-solid fa-times"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <input type="file" id="chat-file-input" class="hidden" onchange="handleFileSelected(event)">
+              <button type="button" onclick="document.getElementById('chat-file-input').click()" title="Attach document, slide, or screenshot" class="p-3 text-slate-400 hover:text-indigo-400 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition">
+                <i class="fa-solid fa-paperclip text-base"></i>
+              </button>
+
+              <input type="text" id="chat-input" placeholder="Ask about homework, past grades, study guides, or draft messages..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition" autocomplete="off">
+
+              <button type="submit" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition disabled:opacity-50">
+                <span>Send</span>
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+
+      <!-- ================= 2. TAB: GRADES & ACADEMIC RECORD ================= -->
+      <section id="tab-grades" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-emerald-400"></i> Academic Records & Grades
+            </h2>
+            <p class="text-xs text-slate-400">Permanent personal academic record, GPA tracking, and historical periods archive</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="openNewTermModal()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-folder-plus text-indigo-400"></i> New Academic Period
+            </button>
+            <button onclick="openCourseModal(null)" class="px-3.5 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium flex items-center gap-1.5 transition shadow">
+              <i class="fa-solid fa-plus"></i> Add Course / Past Grade
+            </button>
+          </div>
+        </header>
+
+        <!-- Grades Overview Body -->
+        <div class="flex-1 overflow-y-auto w-full">
+          <div class="p-6 space-y-6 max-w-6xl mx-auto">
+
+            <!-- Top Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Cumulative GPA -->
+              <div class="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-800/60 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Cumulative GPA (Promedio)</p>
+                  <h3 id="stat-cumulative-gpa" class="text-3xl font-extrabold text-white">--</h3>
+                  <p class="text-[11px] text-slate-400 mt-1">Across all recorded periods</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-award"></i>
+                </div>
+              </div>
+
+              <!-- Active Period GPA -->
+              <div class="bg-gradient-to-br from-emerald-950/60 to-slate-900 border border-emerald-800/60 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">Current Period GPA</p>
+                  <h3 id="stat-current-gpa" class="text-3xl font-extrabold text-emerald-300">--</h3>
+                  <p id="stat-current-term-name" class="text-[11px] text-slate-400 mt-1">Active Term</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-chart-simple"></i>
+                </div>
+              </div>
+
+              <!-- Total Completed Courses -->
+              <div class="bg-gradient-to-br from-purple-950/60 to-slate-900 border border-purple-800/60 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-1">Completed Courses</p>
+                  <h3 id="stat-completed-courses" class="text-3xl font-extrabold text-purple-300">0</h3>
+                  <p class="text-[11px] text-slate-400 mt-1">Accredited subjects</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-book-bookmark"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section: Current Period (Active) -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Current Academic Period</span>
+                </h3>
+              </div>
+              
+              <div id="current-term-card-container">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+            <!-- Section: Historical Academic Periods (Archived) -->
+            <div class="space-y-3 pt-4 border-t border-slate-800">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                    <span>Historical Academic Record (Previous Tetramestres)</span>
+                  </h3>
+                  <p class="text-xs text-slate-400">Your permanent archive of previous periods, safe from Moodle resets</p>
+                </div>
+              </div>
+
+              <div id="historical-terms-container" class="space-y-4">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 3. TAB: DEADLINES & TASKS ================= -->
+      <section id="tab-deadlines" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+              <i class="fa-solid fa-calendar-check text-amber-400"></i> Assignments & Smart Deadlines
+            </h2>
+            <p class="text-xs text-slate-400">Includes formal activities, AI-extracted teacher posts/announcements, and breakdown action plans</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="triggerCourseDeepScan()" id="btn-deep-scan" class="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-1.5 transition shadow">
+              <i class="fa-solid fa-magnifying-glass text-emerald-200"></i> AI Deep Scan Course (Moodle)
+            </button>
+            <button onclick="openExtractTasksModal()" class="px-3 py-1.5 text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg border border-purple-500/30 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> AI Extract from Post
+            </button>
+            <a href="/api/assignments/export/calendar.ics" download class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-calendar-arrow-down text-indigo-400"></i> Export .ICS
+            </a>
+            <button onclick="openAddAssignmentModal()" class="px-3.5 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium flex items-center gap-1.5 transition shadow">
+              <i class="fa-solid fa-plus"></i> Add Task
+            </button>
+          </div>
+        </header>
+
+        <!-- Filters & Assignment List -->
+        <div class="flex-1 overflow-y-auto w-full relative">
+          <div class="p-6 space-y-4 max-w-7xl mx-auto">
+            <!-- Filters & Action Toolbar -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+              <!-- Left: Filter Dropdowns Group -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Period Filter -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                  <i class="fa-solid fa-clock-rotate-left text-indigo-400 text-[11px]"></i>
+                  <select id="filter-term" onchange="handlePeriodFilterChange()" class="bg-slate-950 text-slate-200 focus:outline-none cursor-pointer pr-1">
+                    <option value="">Active Period</option>
+                    <option value="all">All History</option>
+                  </select>
+                </div>
+
+                <!-- Course Filter -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                  <i class="fa-solid fa-book-bookmark text-emerald-400 text-[11px]"></i>
+                  <select id="filter-course" onchange="loadAssignments()" class="bg-slate-950 text-slate-200 focus:outline-none cursor-pointer max-w-[190px] truncate pr-1">
+                    <option value="">All Courses</option>
+                  </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                  <i class="fa-solid fa-circle-check text-amber-400 text-[11px]"></i>
+                  <select id="filter-status" onchange="loadAssignments()" class="bg-slate-950 text-slate-200 focus:outline-none cursor-pointer pr-1">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+
+                <!-- Source Filter -->
+                <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                  <i class="fa-solid fa-filter text-purple-400 text-[11px]"></i>
+                  <select id="filter-source" onchange="loadAssignments()" class="bg-slate-950 text-slate-200 focus:outline-none cursor-pointer pr-1">
+                    <option value="">All Sources</option>
+                    <option value="teacher_post">📢 Teacher Posts</option>
+                    <option value="calendar">📅 Calendar</option>
+                    <option value="course_page">🎓 Course Module</option>
+                    <option value="manual">✍️ Manual</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Right: Select All & Counter -->
+              <div class="flex items-center gap-2.5">
+                <label class="flex items-center gap-2 bg-slate-950 hover:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-300 cursor-pointer select-none transition">
+                  <input type="checkbox" id="bulk-select-all-checkbox" onchange="toggleSelectAllAssignments(this.checked)" class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-900 w-3.5 h-3.5 cursor-pointer">
+                  <span class="font-medium">Select All</span>
+                </label>
+
+                <div class="text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 font-medium">
+                  Total: <span id="assignment-total-count" class="font-bold text-white">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Assignments Grid / Cards -->
+            <div id="assignments-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
+              <!-- Dynamic items rendered here -->
+            </div>
+
+            <!-- Floating Bulk Action Toolbar with High-Contrast Glow Outline -->
+            <div id="bulk-action-bar" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900/98 border-2 border-indigo-500 ring-4 ring-indigo-500/25 shadow-[0_0_35px_rgba(99,102,241,0.55),0_15px_35px_rgba(0,0,0,0.9)] backdrop-blur-xl rounded-2xl px-6 py-3.5 flex items-center gap-4 text-xs transition-all duration-300">
+              <div class="flex items-center gap-2 text-slate-200 font-semibold">
+                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold" id="bulk-selected-count">0</span>
+                <span>selected</span>
+              </div>
+              <div class="h-4 w-px bg-slate-700"></div>
+              <div class="flex items-center gap-2">
+                <button onclick="bulkMarkCompleted()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl flex items-center gap-1.5 shadow transition">
+                  <i class="fa-solid fa-check-double"></i> Mark Completed
+                </button>
+                <button onclick="bulkMarkPending()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
+                  <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Mark Pending
+                </button>
+                <button onclick="bulkDeleteSelected()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium rounded-xl border border-rose-500/30 flex items-center gap-1.5 transition">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+                <button onclick="clearBulkSelection()" class="px-2.5 py-1.5 text-slate-400 hover:text-white transition" title="Deselect All">
+                  <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 4. TAB: NOTES & STUDY STUDIO ================= -->
+      <section id="tab-notes" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Study & Notes Studio</h2>
+            <p class="text-xs text-slate-400">AI Lecture Summarizer, Active Recall Flashcards & Google Docs Export</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="openNewNoteModal()" class="px-3.5 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium flex items-center gap-1.5 transition shadow">
+              <i class="fa-solid fa-plus"></i> New Note
+            </button>
+          </div>
+        </header>
+
+        <!-- Notes Split View -->
+        <div class="flex-1 flex overflow-hidden">
+          <!-- Left: Notes List -->
+          <div class="w-80 border-r border-slate-800 overflow-y-auto p-4 space-y-3 bg-slate-900/30">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Your Notes</span>
+              <span id="notes-count-badge" class="text-xs text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded-full border border-indigo-800">0</span>
+            </div>
+            <div id="notes-list" class="space-y-2">
+              <!-- Dynamically loaded -->
+            </div>
+          </div>
+
+          <!-- Right: Note Viewer & Flashcards -->
+          <div id="note-detail-pane" class="flex-1 overflow-y-auto p-6 bg-slate-950">
+            <div class="h-full flex flex-col items-center justify-center text-slate-500">
+              <i class="fa-solid fa-book text-4xl mb-3 text-slate-700"></i>
+              <p>Select a note on the left or click "New Note" to summarize lecture materials and generate flashcards.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 5. TAB: MOODLE SYNC HUB ================= -->
+      <section id="tab-moodle" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Moodle Synchronization Hub</h2>
+            <p class="text-xs text-slate-400">Automated scraping and calendar integration for your online school</p>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto w-full">
+          <div class="p-6 max-w-4xl mx-auto space-y-6">
+            
+            <!-- Method 1: Playwright Browser Automation -->
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-robot"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-white text-base">Option 1: Playwright Browser Automation & Deep Forum Scraper</h3>
+                    <p class="text-xs text-slate-400">Scrapes courses, grades report, upcoming timeline, AND teacher forum announcements</p>
+                  </div>
+                </div>
+                <span class="px-2.5 py-1 text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full font-medium">Automated</span>
+              </div>
+
+              <div class="space-y-4 text-sm text-slate-300">
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                    <span class="w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center text-[11px]">1</span>
+                    Step 1: Open Browser to Log In / Save Session
+                  </div>
+                  <p class="text-xs text-slate-400 pl-7">Opens a dedicated browser window. Log into your Moodle once so your credentials & session are stored securely in your local profile.</p>
+                  <div class="pl-7 pt-1">
+                    <button onclick="launchMoodleBrowser()" id="btn-launch-browser" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium border border-slate-700 flex items-center gap-2 transition">
+                      <i class="fa-solid fa-arrow-up-right-from-square text-orange-400"></i> Launch Browser & Log In
+                    </button>
+                  </div>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                    <span class="w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center text-[11px]">2</span>
+                    Step 2: Run Automated Sync & AI Post Extraction
+                  </div>
+                  <p class="text-xs text-slate-400 pl-7">Scrapes your courses, grades overview, and uses Gemini AI to extract homework from teacher announcement forums automatically.</p>
+                  <div class="pl-7 pt-1">
+                    <button onclick="runMoodleSync()" id="btn-run-sync" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium shadow flex items-center gap-2 transition">
+                      <i class="fa-solid fa-rotate text-indigo-200"></i> Run Auto Sync Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Method 2: Moodle iCal Calendar Feed -->
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-calendar-days"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-white text-base">Option 2: Instant Moodle iCal Calendar Link</h3>
+                    <p class="text-xs text-slate-400">100% reliable, zero-browser instant calendar synchronization</p>
+                  </div>
+                </div>
+                <span class="px-2.5 py-1 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium">Fast Sync</span>
+              </div>
+
+              <p class="text-xs text-slate-300 mb-3">
+                In Moodle, navigate to <strong>Calendar &gt; Export Calendar &gt; "All events" &gt; "Recent and next 60 days" &gt; Get calendar URL</strong>. Paste that URL below:
+              </p>
+
+              <div class="flex items-center gap-2">
+                <input type="text" id="moodle-ical-input" placeholder="https://licenciatura.ucnl.edu.mx/calendar/export_execute.php?..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                <button onclick="saveAndSyncIcal()" id="btn-sync-ical" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium flex items-center gap-2 transition">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> Sync Feed
+                </button>
+              </div>
+            </div>
+
+            <!-- Sync Results / Status -->
+            <div id="moodle-sync-status" class="hidden p-4 rounded-xl bg-indigo-950/60 border border-indigo-800 text-xs text-indigo-200">
+              <!-- Dynamic results -->
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 6. TAB: SETTINGS ================= -->
+      <section id="tab-settings" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Application Settings</h2>
+            <p class="text-xs text-slate-400">Configure your Gemini API key, model selection, and school endpoints</p>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto w-full">
+          <div class="p-6 max-w-2xl mx-auto space-y-6">
+            <form onsubmit="handleSaveSettings(event)" class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-5 shadow-lg">
+              
+              <!-- Gemini API Key -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                  Google Gemini API Key
+                </label>
+                <input type="password" id="setting-gemini-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                <p class="text-[11px] text-slate-500 mt-1.5">Free API keys can be obtained from <a href="https://aistudio.google.com/" target="_blank" class="text-indigo-400 underline">Google AI Studio</a>.</p>
+              </div>
+
+              <!-- Gemini Model -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                  Gemini Model
+                </label>
+                <select id="setting-gemini-model" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Recommended, Fast & Reliable)</option>
+                  <option value="gemini-3.7-flash">gemini-3.7-flash (Multimodal & Agentic)</option>
+                  <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Deep Reasoning)</option>
+                </select>
+              </div>
+
+              <!-- School Moodle URL -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                  School Moodle URL
+                </label>
+                <input type="text" id="setting-moodle-url" placeholder="https://licenciatura.ucnl.edu.mx" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                <p class="text-[11px] text-slate-500 mt-1.5">The main website or login page for your online school's Moodle.</p>
+              </div>
+
+              <button type="submit" id="btn-save-settings" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-indigo-600/30">
+                Save Settings
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal: AI Breakdown Action Plan -->
+  <div id="modal-ai-breakdown" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> AI Assignment Execution Plan
+        </h3>
+        <button onclick="closeAiBreakdownModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div id="breakdown-loading" class="py-12 text-center text-slate-400 space-y-3">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-purple-400"></i>
+        <p class="text-sm">Gemini is analyzing the requirements, breaking down steps, and generating a 10/10 strategy...</p>
+      </div>
+
+      <div id="breakdown-content" class="hidden space-y-4 text-xs text-slate-300">
+        <!-- Summary & Estimated Time -->
+        <div class="bg-purple-950/30 border border-purple-800/50 p-4 rounded-xl space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-purple-300 uppercase tracking-wider text-[11px]">Goal & Requirements</span>
+            <span id="breakdown-time" class="px-2.5 py-0.5 bg-purple-900/50 text-purple-200 rounded-full font-semibold border border-purple-700/50">⏱️ Est. Time: --</span>
+          </div>
+          <p id="breakdown-summary" class="text-slate-200 text-xs leading-relaxed"></p>
+        </div>
+
+        <!-- Step by Step Plan -->
+        <div>
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-ol text-indigo-400"></i> Step-by-Step Execution Plan
+          </h4>
+          <div id="breakdown-steps-list" class="space-y-2">
+            <!-- Dynamic steps -->
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div>
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-square-check text-emerald-400"></i> Deliverable Checklist
+          </h4>
+          <div id="breakdown-checklist" class="space-y-1.5 bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+            <!-- Dynamic checklist -->
+          </div>
+        </div>
+
+        <!-- Pro Tips -->
+        <div class="bg-amber-950/20 border border-amber-800/40 p-3.5 rounded-xl space-y-1">
+          <h4 class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-lightbulb"></i> Tips to Score 10/10:
+          </h4>
+          <ul id="breakdown-tips" class="list-disc list-inside text-slate-300 space-y-1 pl-1">
+            <!-- Dynamic tips -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal: AI Extract Deadlines from Teacher Text/Email -->
+  <div id="modal-extract-tasks" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Extract Tasks from Teacher Message / Post
+        </h3>
+        <button onclick="closeExtractTasksModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400">
+        Paste any unstructured message from a professor (WhatsApp, email, forum notice, or course topic). Gemini will automatically parse the homework deliverables, deadlines, and format rules.
+      </p>
+
+      <form onsubmit="handleExtractTasks(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Associated Course (Optional)</label>
+          <select id="extract-course-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Teacher Message / Announcement Text</label>
+          <textarea id="extract-raw-text" rows="6" placeholder="e.g. 'Estimados alumnos, para el próximo viernes subir el video de POO antes de las 23:59...'" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-200 font-mono text-xs"></textarea>
+        </div>
+
+        <button type="submit" id="btn-run-extract" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition shadow flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Extract & Add to Task Board
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: Create Academic Term -->
+  <div id="modal-term" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-folder-plus text-indigo-400"></i> New Academic Period
+        </h3>
+        <button onclick="closeNewTermModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <form onsubmit="handleCreateTerm(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Period Name</label>
+          <input type="text" id="new-term-name" placeholder="e.g. 4to Tetramestre (2026-3) or 2do Tetramestre" required class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <input type="checkbox" id="new-term-is-current" class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500">
+          <label for="new-term-is-current" class="text-slate-300 text-xs">Set as Current Active Period (Future Moodle syncs will link here)</label>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition shadow">
+          Create Period
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: Add / Edit Course & Grade -->
+  <div id="modal-course" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="modal-course-title" class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-book text-indigo-400"></i> Course & Grade Details
+        </h3>
+        <button onclick="closeCourseModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveCourse(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="course-edit-id">
+        
+        <div>
+          <label class="block text-slate-400 mb-1">Course Name</label>
+          <input type="text" id="course-form-name" placeholder="e.g. Álgebra Lineal, Programación Web..." required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Course Code / Short Name</label>
+            <input type="text" id="course-form-code" placeholder="e.g. MAT101" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Final Grade (Calificación)</label>
+            <input type="text" id="course-form-grade" placeholder="e.g. 10.00, 9.85" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 font-bold text-emerald-400">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Academic Period (Term)</label>
+            <select id="course-form-term" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Status</label>
+            <select id="course-form-status" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+              <option value="completed">Completed (Acreditada)</option>
+              <option value="active">Active (En Curso)</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition shadow mt-2">
+          Save Course
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: Draft Email to Professor -->
+  <div id="modal-email" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-envelope text-indigo-400"></i> AI Professor Email Drafter
+        </h3>
+        <button onclick="closeEmailModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="handleGenerateEmail(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Professor / TA Name</label>
+            <input type="text" id="email-prof-name" placeholder="Dr. Smith" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Course Name</label>
+            <input type="text" id="email-course-name" placeholder="CS 101 - Algorithms" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Purpose</label>
+            <select id="email-purpose" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+              <option value="Extension request">Extension Request</option>
+              <option value="Question about assignment instructions">Assignment Clarification</option>
+              <option value="Schedule office hours meeting">Office Hours Appointment</option>
+              <option value="Absence notification">Absence Notification</option>
+              <option value="Grade inquiry">Grade Clarification</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Tone</label>
+            <select id="email-tone" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+              <option value="polite and professional">Polite & Professional</option>
+              <option value="respectful and urgent">Urgent & Respectful</option>
+              <option value="formal and concise">Formal & Concise</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Details & Reason</label>
+          <textarea id="email-details" rows="3" placeholder="Explain your situation, specific assignment number, etc." required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"></textarea>
+        </div>
+
+        <button type="submit" id="btn-generate-email" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition">
+          Generate Draft
+        </button>
+      </form>
+
+      <!-- Email Draft Output -->
+      <div id="email-output-container" class="hidden space-y-2 pt-2 border-t border-slate-800">
+        <label class="block text-xs font-semibold text-indigo-300">Generated Email Draft:</label>
+        <div id="email-output" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-200 font-mono whitespace-pre-wrap max-h-56 overflow-y-auto"></div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button onclick="copyGeneratedEmail()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-copy"></i> Copy to Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal: Add Custom Assignment -->
+  <div id="modal-add-assignment" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white">Add New Assignment / Task</h3>
+        <button onclick="closeAddAssignmentModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreateAssignment(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Title</label>
+          <input type="text" id="new-assignment-title" placeholder="Homework 3, Lab report..." required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Course</label>
+          <select id="new-assignment-course" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+            <!-- Dynamically filled -->
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Due Date & Time</label>
+            <input type="datetime-local" id="new-assignment-due" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Priority</label>
+            <select id="new-assignment-priority" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Description / Notes</label>
+          <textarea id="new-assignment-desc" rows="2" placeholder="Specific requirements or submission guidelines..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition">
+          Save Assignment
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: New Note & AI Summarizer -->
+  <div id="modal-new-note" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sparkles text-indigo-400"></i> New Lecture Notes & AI Studio
+        </h3>
+        <button onclick="closeNewNoteModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreateNote(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Note Title</label>
+            <input type="text" id="new-note-title" placeholder="e.g. Chapter 4: Neural Networks" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Course</label>
+            <select id="new-note-course" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200">
+              <!-- Dynamically loaded -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Lecture Content / Raw Notes</label>
+          <textarea id="new-note-content" rows="8" placeholder="Paste your lecture notes, transcript, or textbook summary here..." required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-200 font-mono"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="note-auto-summarize" checked class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500">
+          <label for="note-auto-summarize" class="text-slate-300">Run AI Summarizer & Auto-Generate Flashcards</label>
+        </div>
+
+        <button type="submit" id="btn-save-note" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Process & Save Note
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // State
+    let currentTab = 'chat';
+    let courses = [];
+    let assignments = [];
+    let notes = [];
+    let terms = [];
+    let selectedNote = null;
+    let currentAttachedFile = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadConfig();
+      await loadTerms();
+      await loadCourses();
+      await loadAssignments();
+      await loadNotes();
+      await loadGradesOverview();
+      await loadChatHistory();
+    });
+
+    // Tab switcher
+    function switchTab(tab) {
+      ['chat', 'grades', 'deadlines', 'notes', 'moodle', 'settings'].forEach(t => {
+        const sec = document.getElementById(`tab-${t}`);
+        if (sec) sec.classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (navBtn) {
+          navBtn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+          navBtn.classList.add('text-slate-400');
+        }
+      });
+
+      const activeSec = document.getElementById(`tab-${tab}`);
+      if (activeSec) activeSec.classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tab}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-400');
+        activeNav.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+      }
+      currentTab = tab;
+
+      if (tab === 'grades') loadGradesOverview();
+      if (tab === 'deadlines') loadAssignments();
+    }
+
+    // --- CONFIG & SETTINGS ---
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        document.getElementById('sidebar-model-name').textContent = data.gemini_model || 'gemini-3.5-flash-lite';
+        document.getElementById('setting-gemini-model').value = data.gemini_model || 'gemini-3.5-flash-lite';
+        document.getElementById('setting-moodle-url').value = data.moodle_url || '';
+        document.getElementById('moodle-ical-input').value = data.moodle_ical_url || '';
+
+        const statusBadge = document.getElementById('sidebar-ai-status');
+        if (data.gemini_api_key_configured) {
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ready';
+          statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        } else {
+          statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Set Key';
+          statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        }
+      } catch (err) {
+        console.error("Failed to load config:", err);
+      }
+    }
+
+    async function handleSaveSettings(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-settings');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const key = document.getElementById('setting-gemini-key').value.trim();
+      const model = document.getElementById('setting-gemini-model').value;
+      const moodle = document.getElementById('setting-moodle-url').value;
+
+      if (key && (key.includes(' ') && key.includes('?'))) {
+        alert("⚠️ The value entered contains spaces and question marks. Please make sure you are entering your API key rather than a chat prompt.");
+        btn.disabled = false;
+        btn.textContent = 'Save Settings';
+        return;
+      }
+
+      const payload = {
+        gemini_model: model,
+        moodle_url: moodle
+      };
+      if (key) payload.gemini_api_key = key;
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert(data.message || 'Settings saved!');
+        await loadConfig();
+      } catch (err) {
+        alert('Failed to save settings: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Settings';
+      }
+    }
+
+
+    // --- GRADES & ACADEMIC RECORDS OVERVIEW ---
+    async function loadGradesOverview() {
+      try {
+        const res = await fetch('/api/grades/overview');
+        const data = await res.json();
+
+        document.getElementById('stat-cumulative-gpa').textContent = data.cumulative_gpa ? data.cumulative_gpa.toFixed(2) : '--';
+        document.getElementById('stat-completed-courses').textContent = data.total_courses_completed;
+
+        if (data.current_term) {
+          document.getElementById('stat-current-gpa').textContent = data.current_term.term_gpa ? data.current_term.term_gpa.toFixed(2) : '--';
+          document.getElementById('stat-current-term-name').textContent = data.current_term.name;
+        } else {
+          document.getElementById('stat-current-gpa').textContent = '--';
+          document.getElementById('stat-current-term-name').textContent = 'No Active Term';
+        }
+
+        renderCurrentTerm(data.current_term);
+        renderHistoricalTerms(data.historical_terms);
+      } catch (err) {
+        console.error("Failed to load grades overview:", err);
+      }
+    }
+
+    function getGradeBadge(grade) {
+      if (!grade) return `<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-xs rounded-lg font-medium">In Progress</span>`;
+      const num = parseFloat(grade);
+      if (isNaN(num)) return `<span class="px-2.5 py-1 bg-indigo-950 text-indigo-300 text-xs rounded-lg font-bold">${grade}</span>`;
+
+      if (num >= 9.5) {
+        return `<span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs rounded-lg font-extrabold flex items-center gap-1"><i class="fa-solid fa-star text-[10px] text-amber-400"></i> ${grade}</span>`;
+      } else if (num >= 8.0) {
+        return `<span class="px-2.5 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs rounded-lg font-bold">${grade}</span>`;
+      } else if (num >= 7.0) {
+        return `<span class="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs rounded-lg font-bold">${grade}</span>`;
+      } else {
+        return `<span class="px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs rounded-lg font-bold">${grade}</span>`;
+      }
+    }
+
+    function renderCurrentTerm(term) {
+      const container = document.getElementById('current-term-card-container');
+      if (!term) {
+        container.innerHTML = `
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 space-y-3">
+            <i class="fa-solid fa-folder-open text-3xl text-slate-600"></i>
+            <p>No active period designated. Click "New Academic Period" to start your next term (e.g. 4to Tetramestre)!</p>
+            <button onclick="openNewTermModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium transition">
+              <i class="fa-solid fa-plus mr-1"></i> Create 4th Period
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const coursesHtml = (term.courses || []).map(c => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-0.5 bg-slate-900 rounded-md border border-slate-800">
+                ${c.code || 'COURSE'}
+              </span>
+              ${getGradeBadge(c.grade)}
+            </div>
+            <h4 class="font-semibold text-slate-100 text-sm line-clamp-2">${c.name}</h4>
+          </div>
+          <div class="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-500 text-[11px]">${c.status === 'completed' ? 'Accredited' : 'Enrolled'}</span>
+            <div class="flex items-center gap-1.5">
+              ${c.moodle_url ? `
+                <a href="${c.moodle_url}" target="_blank" title="Open in Moodle" class="p-1.5 text-slate-400 hover:text-indigo-400 bg-slate-900 hover:bg-slate-800 rounded-lg transition">
+                  <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+              ` : ''}
+              <button onclick="openCourseModal(${c.id})" title="Edit Grade" class="p-1.5 text-slate-400 hover:text-emerald-400 bg-slate-900 hover:bg-slate-800 rounded-lg transition">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">Active Period</span>
+                <span class="text-xs text-slate-400">${term.course_count} Courses</span>
+              </div>
+              <h3 class="text-xl font-bold text-white">${term.name}</h3>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Period Average</span>
+                <span class="text-2xl font-extrabold text-emerald-400">${term.term_gpa ? term.term_gpa.toFixed(2) : '--'}</span>
+              </div>
+              <button onclick="openCourseModal(null, ${term.id})" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-plus text-indigo-400"></i> Add Course
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${coursesHtml || '<p class="text-xs text-slate-500 col-span-full py-4 text-center">No courses linked to this period yet.</p>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHistoricalTerms(histTerms) {
+      const container = document.getElementById('historical-terms-container');
+      if (!histTerms || !histTerms.length) {
+        container.innerHTML = `
+          <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 text-center text-slate-500 space-y-2">
+            <i class="fa-solid fa-box-archive text-2xl text-slate-700"></i>
+            <p class="text-xs">No previous terms archived yet. As periods finish, they will remain safely stored here as your permanent transcript.</p>
+            <button onclick="openNewTermModal()" class="text-xs text-indigo-400 hover:underline">
+              Add 1st or 2nd Tetramestre manually
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = histTerms.map(t => {
+        const coursesRows = (t.courses || []).map(c => `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-bold uppercase text-slate-400 px-1.5 py-0.5 bg-slate-900 rounded border border-slate-800">${c.code || 'COURSE'}</span>
+                <span class="text-xs font-medium text-slate-200">${c.name}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              ${getGradeBadge(c.grade)}
+              <button onclick="openCourseModal(${c.id})" class="text-slate-500 hover:text-slate-200 text-xs p-1">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span class="text-[10px] uppercase font-semibold text-slate-500 px-2 py-0.5 bg-slate-950 rounded-md border border-slate-800">Archived Term</span>
+                <h4 class="text-base font-bold text-white mt-1">${t.name}</h4>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <span class="text-[10px] uppercase tracking-wider text-slate-400 block">GPA</span>
+                  <span class="text-lg font-bold text-emerald-400">${t.term_gpa ? t.term_gpa.toFixed(2) : '--'}</span>
+                </div>
+                <button onclick="setCurrentTerm(${t.id})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700 transition" title="Set as current active period">
+                  <i class="fa-solid fa-thumbtack text-amber-400"></i> Set Current
+                </button>
+                <button onclick="openCourseModal(null, ${t.id})" class="px-2.5 py-1.5 bg-indigo-950 hover:bg-indigo-900 text-indigo-300 rounded-lg text-xs border border-indigo-800 transition" title="Add Course">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              ${coursesRows || '<p class="text-xs text-slate-500 col-span-full py-2">No courses in this term yet.</p>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- MODAL: NEW TERM ---
+    function openNewTermModal() {
+      document.getElementById('modal-term').classList.remove('hidden');
+    }
+    function closeNewTermModal() {
+      document.getElementById('modal-term').classList.add('hidden');
+    }
+    async function handleCreateTerm(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-term-name').value.trim();
+      const is_current = document.getElementById('new-term-is-current').checked;
+
+      await fetch('/api/terms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, is_current })
+      });
+
+      closeNewTermModal();
+      document.getElementById('new-term-name').value = '';
+      await loadGradesOverview();
+      await loadCourses();
+    }
+
+    async function setCurrentTerm(termId) {
+      if (!confirm("Set this period as your active current period?")) return;
+      await fetch(`/api/terms/${termId}/set-current`, { method: 'PUT' });
+      await loadGradesOverview();
+    }
+
+    // --- MODAL: ADD / EDIT COURSE ---
+    async function openCourseModal(courseId = null, defaultTermId = null) {
+      const modal = document.getElementById('modal-course');
+      const termSelect = document.getElementById('course-form-term');
+
+      const termsRes = await fetch('/api/terms');
+      terms = await termsRes.json();
+      termSelect.innerHTML = '<option value="">No Specific Period</option>';
+      terms.forEach(t => {
+        termSelect.innerHTML += `<option value="${t.id}">${t.name} ${t.is_current ? '(Current)' : ''}</option>`;
+      });
+
+      if (courseId) {
+        document.getElementById('modal-course-title').innerHTML = '<i class="fa-solid fa-pen text-indigo-400"></i> Edit Course & Grade';
+        document.getElementById('course-edit-id').value = courseId;
+
+        const c = courses.find(item => item.id === courseId);
+        if (c) {
+          document.getElementById('course-form-name').value = c.name || '';
+          document.getElementById('course-form-code').value = c.code || '';
+          document.getElementById('course-form-grade').value = c.grade || '';
+          document.getElementById('course-form-term').value = c.term_id || '';
+          document.getElementById('course-form-status').value = c.status || 'completed';
+        }
+      } else {
+        document.getElementById('modal-course-title').innerHTML = '<i class="fa-solid fa-plus text-indigo-400"></i> Add Course & Grade';
+        document.getElementById('course-edit-id').value = '';
+        document.getElementById('course-form-name').value = '';
+        document.getElementById('course-form-code').value = '';
+        document.getElementById('course-form-grade').value = '';
+        if (defaultTermId) {
+          document.getElementById('course-form-term').value = defaultTermId;
+        }
+        document.getElementById('course-form-status').value = 'completed';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeCourseModal() {
+      document.getElementById('modal-course').classList.add('hidden');
+    }
+
+    async function handleSaveCourse(e) {
+      e.preventDefault();
+      const courseId = document.getElementById('course-edit-id').value;
+      const name = document.getElementById('course-form-name').value.trim();
+      const code = document.getElementById('course-form-code').value.trim();
+      const grade = document.getElementById('course-form-grade').value.trim() || null;
+      const term_id = document.getElementById('course-form-term').value ? parseInt(document.getElementById('course-form-term').value) : null;
+      const status = document.getElementById('course-form-status').value;
+
+      if (courseId) {
+        await fetch(`/api/courses/${courseId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, code, grade, term_id, status })
+        });
+      } else {
+        await fetch('/api/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, code, grade, term_id, status })
+        });
+      }
+
+      closeCourseModal();
+      await loadCourses();
+      await loadGradesOverview();
+    }
+
+
+    // --- COURSES & SMART FILTERING ---
+    async function loadCourses() {
+      try {
+        const res = await fetch('/api/courses');
+        courses = await res.json();
+        
+        const newAssignCourse = document.getElementById('new-assignment-course');
+        const newNoteCourse = document.getElementById('new-note-course');
+        const extractCourse = document.getElementById('extract-course-select');
+
+        if (newAssignCourse) newAssignCourse.innerHTML = '<option value="">No Course (General)</option>';
+        if (newNoteCourse) newNoteCourse.innerHTML = '<option value="">No Course (General)</option>';
+        if (extractCourse) extractCourse.innerHTML = '<option value="">Auto-Detect Course</option>';
+
+        courses.forEach(c => {
+          const opt = `<option value="${c.id}">${c.name} (${c.code || 'GEN'})</option>`;
+          if (newAssignCourse) newAssignCourse.innerHTML += opt;
+          if (newNoteCourse) newNoteCourse.innerHTML += opt;
+          if (extractCourse) extractCourse.innerHTML += opt;
+        });
+
+        updateCourseFilterOptions();
+      } catch (err) {
+        console.error("Failed to load courses:", err);
+      }
+    }
+
+    function updateCourseFilterOptions(selectedPeriodValue = null) {
+      const filterCourse = document.getElementById('filter-course');
+      if (!filterCourse) return;
+
+      const termVal = selectedPeriodValue !== null 
+        ? selectedPeriodValue 
+        : (document.getElementById('filter-term') ? document.getElementById('filter-term').value : '');
+
+      let filteredCourses = courses;
+
+      if (termVal === '') {
+        // Active Period (Current)
+        const currentTerm = terms.find(t => t.is_current);
+        if (currentTerm) {
+          filteredCourses = courses.filter(c => c.term_id === currentTerm.id);
+        }
+      } else if (termVal !== 'all') {
+        const termId = parseInt(termVal);
+        if (!isNaN(termId)) {
+          filteredCourses = courses.filter(c => c.term_id === termId);
+        }
+      }
+
+      const prevSelectedCourse = filterCourse.value;
+      filterCourse.innerHTML = `<option value="">All Courses (${filteredCourses.length})</option>`;
+      
+      filteredCourses.forEach(c => {
+        filterCourse.innerHTML += `<option value="${c.id}">${c.name} (${c.code || 'GEN'})</option>`;
+      });
+
+      // Preserve selection if valid in new period
+      if (prevSelectedCourse && filteredCourses.some(c => c.id == prevSelectedCourse)) {
+        filterCourse.value = prevSelectedCourse;
+      } else {
+        filterCourse.value = '';
+      }
+    }
+
+    async function handlePeriodFilterChange() {
+      const termVal = document.getElementById('filter-term') ? document.getElementById('filter-term').value : '';
+      updateCourseFilterOptions(termVal);
+      await loadAssignments();
+    }
+
+    async function loadTerms() {
+      try {
+        const res = await fetch('/api/terms');
+        terms = await res.json();
+
+        const filterTerm = document.getElementById('filter-term');
+        if (filterTerm) {
+          filterTerm.innerHTML = `
+            <option value="">Active Period</option>
+            <option value="all">All Periods (History)</option>
+          `;
+          terms.forEach(t => {
+            filterTerm.innerHTML += `<option value="${t.id}">${t.name} ${t.is_current ? '(Current)' : '(Archived)'}</option>`;
+          });
+        }
+
+        updateCourseFilterOptions();
+      } catch (err) {
+        console.error("Failed to load terms:", err);
+      }
+    }
+
+    // --- ASSIGNMENTS & DEADLINES ---
+    async function loadAssignments() {
+      const termFilter = document.getElementById('filter-term') ? document.getElementById('filter-term').value : '';
+      const courseId = document.getElementById('filter-course') ? document.getElementById('filter-course').value : '';
+      const status = document.getElementById('filter-status') ? document.getElementById('filter-status').value : '';
+      const source = document.getElementById('filter-source') ? document.getElementById('filter-source').value : '';
+
+      let url = '/api/assignments?';
+      if (courseId) {
+        url += `course_id=${courseId}&`;
+      } else if (termFilter && termFilter !== 'all') {
+        url += `term_id=${termFilter}&`;
+      } else if (termFilter === '') {
+        const currentTerm = terms.find(t => t.is_current);
+        if (currentTerm) {
+          url += `term_id=${currentTerm.id}&`;
+        }
+      }
+
+      if (status) url += `status=${status}&`;
+
+      try {
+        const res = await fetch(url);
+        let items = await res.json();
+        
+        if (source) {
+          items = items.filter(a => a.source === source);
+        }
+
+        assignments = items;
+        
+        const pendingCount = items.filter(a => a.status !== 'completed').length;
+        document.getElementById('badge-deadlines-count').textContent = pendingCount;
+        document.getElementById('assignment-total-count').textContent = items.length;
+
+        renderAssignments(items);
+      } catch (err) {
+        console.error("Failed to load assignments:", err);
+      }
+    }
+
+    // State for bulk selection
+    let selectedAssignmentIds = new Set();
+
+    function renderAssignments(items) {
+      const container = document.getElementById('assignments-container');
+      if (!container) return;
+
+      if (!items.length) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500 space-y-2">
+            <i class="fa-solid fa-calendar-xmark text-3xl mb-1 text-slate-600"></i>
+            <p>No matching deliverables or assignments found.</p>
+            <button onclick="openExtractTasksModal()" class="px-3 py-1.5 bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 rounded-lg text-xs border border-purple-800 transition">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Extract from teacher announcement
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const now = new Date();
+
+      container.innerHTML = items.map(a => {
+        let dueBadge = '';
+        let isOverdue = false;
+        let formattedDate = a.due_date_raw || 'No date specified';
+
+        if (a.due_date) {
+          const dueDate = new Date(a.due_date);
+          formattedDate = dueDate.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const diffHours = (dueDate - now) / (1000 * 60 * 60);
+
+          if (a.status === 'completed') {
+            dueBadge = '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] rounded-full font-medium">Completed</span>';
+          } else if (diffHours < 0) {
+            isOverdue = true;
+            dueBadge = '<span class="px-2 py-0.5 bg-rose-500/20 text-rose-300 text-[10px] rounded-full font-medium animate-pulse">Overdue</span>';
+          } else if (diffHours <= 24) {
+            dueBadge = `<span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] rounded-full font-medium">Due in ${Math.round(diffHours)}h</span>`;
+          } else {
+            const days = Math.round(diffHours / 24);
+            dueBadge = `<span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 text-[10px] rounded-full font-medium">Due in ${days}d</span>`;
+          }
+        }
+
+        // Source badge
+        let sourceBadge = '';
+        if (a.source === 'teacher_post') {
+          sourceBadge = `<span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] font-semibold flex items-center gap-1"><i class="fa-solid fa-bullhorn text-[9px]"></i> Teacher Post</span>`;
+        } else if (a.source === 'calendar') {
+          sourceBadge = `<span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-semibold flex items-center gap-1"><i class="fa-solid fa-calendar text-[9px]"></i> Moodle Calendar</span>`;
+        } else if (a.source === 'course_page') {
+          sourceBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"><i class="fa-solid fa-graduation-cap text-[9px]"></i> Course Module</span>`;
+        }
+
+        const isCompleted = a.status === 'completed';
+        const isSelected = selectedAssignmentIds.has(a.id);
+
+        return `
+          <div class="bg-slate-900 border ${isSelected ? 'border-indigo-500 ring-1 ring-indigo-500/60 shadow-lg shadow-indigo-950/40' : (isOverdue ? 'border-rose-900/60' : 'border-slate-800')} rounded-2xl p-4 flex flex-col justify-between shadow-md hover:border-slate-700 transition space-y-3 relative group">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectAssignment(${a.id}, this.checked)" class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-950 w-4 h-4 cursor-pointer">
+                  <span class="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700" style="border-left: 3px solid ${a.course_color};">
+                    ${a.course_code || a.course_name}
+                  </span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  ${sourceBadge}
+                  ${dueBadge}
+                </div>
+              </div>
+              <h3 class="font-medium text-slate-100 text-sm mb-1 ${isCompleted ? 'line-through text-slate-500' : ''}">${a.title}</h3>
+              <p class="text-xs text-slate-400 line-clamp-3">${a.description || 'No description'}</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5 text-slate-400">
+                <i class="fa-regular fa-clock text-[11px]"></i>
+                <span class="text-[11px]">${formattedDate}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openAiBreakdownModal(${a.id})" title="Generate AI Execution Plan & Checklist" class="px-2 py-1 bg-purple-950/60 hover:bg-purple-900 text-purple-300 rounded-lg text-xs border border-purple-800/60 flex items-center gap-1 transition">
+                  <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> AI Plan
+                </button>
+                ${a.due_date ? `
+                  <button onclick="openGoogleCalendarDirect(${a.id})" title="Add to Google Calendar" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg transition">
+                    <i class="fa-brands fa-google text-xs"></i>
+                  </button>
+                ` : ''}
+                <button onclick="toggleAssignmentStatus(${a.id}, '${isCompleted ? 'pending' : 'completed'}')" class="p-1.5 ${isCompleted ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-400'} rounded-lg transition" title="${isCompleted ? 'Mark Pending' : 'Mark Done'}">
+                  <i class="fa-solid fa-check text-xs"></i>
+                </button>
+                <button onclick="deleteAssignment(${a.id})" class="p-1.5 bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-500 rounded-lg transition" title="Delete">
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- BULK ASSIGNMENTS LOGIC ---
+    function toggleSelectAssignment(id, isChecked) {
+      if (isChecked) {
+        selectedAssignmentIds.add(id);
+      } else {
+        selectedAssignmentIds.delete(id);
+      }
+      updateBulkActionBar();
+      renderAssignments(assignments);
+    }
+
+    function toggleSelectAllAssignments(isChecked) {
+      if (isChecked) {
+        assignments.forEach(a => selectedAssignmentIds.add(a.id));
+      } else {
+        selectedAssignmentIds.clear();
+      }
+      updateBulkActionBar();
+      renderAssignments(assignments);
+    }
+
+    function clearBulkSelection() {
+      selectedAssignmentIds.clear();
+      const selectAll = document.getElementById('bulk-select-all-checkbox');
+      if (selectAll) selectAll.checked = false;
+      updateBulkActionBar();
+      renderAssignments(assignments);
+    }
+
+    function updateBulkActionBar() {
+      const bar = document.getElementById('bulk-action-bar');
+      const countEl = document.getElementById('bulk-selected-count');
+      const selectAll = document.getElementById('bulk-select-all-checkbox');
+
+      if (countEl) countEl.textContent = selectedAssignmentIds.size;
+
+      if (selectedAssignmentIds.size > 0) {
+        if (bar) bar.classList.remove('hidden');
+        if (selectAll) selectAll.checked = (assignments.length > 0 && selectedAssignmentIds.size === assignments.length);
+      } else {
+        if (bar) bar.classList.add('hidden');
+        if (selectAll) selectAll.checked = false;
+      }
+    }
+
+    async function bulkMarkCompleted() {
+      if (!selectedAssignmentIds.size) return;
+      const ids = Array.from(selectedAssignmentIds);
+      await fetch('/api/assignments/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_ids: ids, status: 'completed' })
+      });
+      selectedAssignmentIds.clear();
+      updateBulkActionBar();
+      await loadAssignments();
+    }
+
+    async function bulkMarkPending() {
+      if (!selectedAssignmentIds.size) return;
+      const ids = Array.from(selectedAssignmentIds);
+      await fetch('/api/assignments/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_ids: ids, status: 'pending' })
+      });
+      selectedAssignmentIds.clear();
+      updateBulkActionBar();
+      await loadAssignments();
+    }
+
+    async function bulkDeleteSelected() {
+      if (!selectedAssignmentIds.size) return;
+      const count = selectedAssignmentIds.size;
+      if (!confirm(`Are you sure you want to delete ${count} selected deliverable(s)?`)) return;
+
+      const ids = Array.from(selectedAssignmentIds);
+      await fetch('/api/assignments/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_ids: ids })
+      });
+      selectedAssignmentIds.clear();
+      updateBulkActionBar();
+      await loadAssignments();
+    }
+
+    async function toggleAssignmentStatus(id, newStatus) {
+      await fetch(`/api/assignments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      await loadAssignments();
+    }
+
+    async function deleteAssignment(id) {
+      if (!confirm("Are you sure you want to delete this assignment?")) return;
+      await fetch(`/api/assignments/${id}`, { method: 'DELETE' });
+      await loadAssignments();
+    }
+
+    async function openGoogleCalendarDirect(id) {
+      try {
+        const res = await fetch(`/api/assignments/${id}/gcal-link`);
+        const data = await res.json();
+        if (data.url) window.open(data.url, '_blank');
+      } catch (err) {
+        alert("Failed to create Google Calendar link: " + err.message);
+      }
+    }
+
+    // --- MODAL: AI ASSIGNMENT BREAKDOWN ---
+    async function openAiBreakdownModal(assignmentId) {
+      const modal = document.getElementById('modal-ai-breakdown');
+      const loading = document.getElementById('breakdown-loading');
+      const content = document.getElementById('breakdown-content');
+
+      modal.classList.remove('hidden');
+      loading.classList.remove('hidden');
+      content.classList.add('hidden');
+
+      try {
+        const res = await fetch(`/api/assignments/${assignmentId}/ai-breakdown`, { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success && data.breakdown) {
+          const b = data.breakdown;
+          document.getElementById('breakdown-time').textContent = `⏱️ Est. Time: ${b.estimated_time || '1 - 2 hours'}`;
+          document.getElementById('breakdown-summary').textContent = b.summary || 'Execute all deliverables accurately as instructed.';
+
+          // Steps list
+          const stepsContainer = document.getElementById('breakdown-steps-list');
+          stepsContainer.innerHTML = (b.steps || []).map(s => `
+            <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-start gap-3">
+              <span class="w-6 h-6 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800 flex items-center justify-center font-bold text-xs flex-shrink-0">${s.step_number || 1}</span>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-0.5">
+                  <h5 class="font-semibold text-slate-100 text-xs">${s.title}</h5>
+                  <span class="text-[10px] text-slate-500">${s.estimated_minutes ? `${s.estimated_minutes} min` : ''}</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-relaxed">${s.detail}</p>
+              </div>
+            </div>
+          `).join('');
+
+          // Checklist
+          const checklistContainer = document.getElementById('breakdown-checklist');
+          checklistContainer.innerHTML = (b.checklist || []).map((item, idx) => `
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer hover:text-white">
+              <input type="checkbox" class="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500 bg-slate-900">
+              <span>${item}</span>
+            </label>
+          `).join('');
+
+          // Tips
+          const tipsContainer = document.getElementById('breakdown-tips');
+          tipsContainer.innerHTML = (b.pro_tips || []).map(t => `<li>${t}</li>`).join('');
+
+          loading.classList.add('hidden');
+          content.classList.remove('hidden');
+        }
+      } catch (err) {
+        alert("Failed to generate AI plan: " + err.message);
+        closeAiBreakdownModal();
+      }
+    }
+
+    function closeAiBreakdownModal() {
+      document.getElementById('modal-ai-breakdown').classList.add('hidden');
+    }
+
+    // --- MODAL: EXTRACT TASKS FROM TEXT ---
+    function openExtractTasksModal() {
+      document.getElementById('modal-extract-tasks').classList.remove('hidden');
+    }
+    function closeExtractTasksModal() {
+      document.getElementById('modal-extract-tasks').classList.add('hidden');
+    }
+
+    async function handleExtractTasks(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-run-extract');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Extracting with Gemini...`;
+
+      const text = document.getElementById('extract-raw-text').value.trim();
+      const course_id = document.getElementById('extract-course-select').value ? parseInt(document.getElementById('extract-course-select').value) : null;
+
+      try {
+        const res = await fetch('/api/assignments/extract-from-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, course_id })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert(`Successfully extracted and created ${data.count} task(s)!`);
+          closeExtractTasksModal();
+          document.getElementById('extract-raw-text').value = '';
+          await loadAssignments();
+        } else {
+          alert("Could not extract tasks from text.");
+        }
+      } catch (err) {
+        alert("Extraction error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Extract & Add to Task Board`;
+      }
+    }
+
+    // --- DEEP COURSE SCAN (MOODLE) ---
+    async function triggerCourseDeepScan() {
+      const courseId = document.getElementById('filter-course') ? document.getElementById('filter-course').value : '';
+      const btn = document.getElementById('btn-deep-scan');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Scanning Course Page...`;
+      }
+
+      try {
+        let url = '/api/courses/deep-scan-all';
+        if (courseId) {
+          url = `/api/courses/${courseId}/deep-scan`;
+        }
+
+        const res = await fetch(url, { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success) {
+          const msg = courseId 
+            ? `Deep Scan Complete for ${data.course_name}!\nMatched ${data.matched_count} calendar events and found ${data.created_count} course deliverables on Moodle.`
+            : `Deep Scan Complete across all enrolled courses!\nMatched ${data.total_matched} calendar activities and created ${data.total_created} course deliverables.`;
+          alert(msg);
+          await loadAssignments();
+        } else {
+          alert("Deep scan could not complete: " + (data.detail || "Error"));
+        }
+      } catch (err) {
+        alert("Deep Scan Error: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fa-solid fa-magnifying-glass text-emerald-200"></i> AI Deep Scan Course (Moodle)`;
+        }
+      }
+    }
+
+    // Modal: Add Assignment
+    function openAddAssignmentModal() {
+      document.getElementById('modal-add-assignment').classList.remove('hidden');
+    }
+    function closeAddAssignmentModal() {
+      document.getElementById('modal-add-assignment').classList.add('hidden');
+    }
+    async function handleCreateAssignment(e) {
+      e.preventDefault();
+      const title = document.getElementById('new-assignment-title').value;
+      const course_id = document.getElementById('new-assignment-course').value || null;
+      const due_date = document.getElementById('new-assignment-due').value || null;
+      const priority = document.getElementById('new-assignment-priority').value;
+      const description = document.getElementById('new-assignment-desc').value;
+
+      await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, course_id, due_date, priority, description, source: 'manual' })
+      });
+
+      closeAddAssignmentModal();
+      document.getElementById('new-assignment-title').value = '';
+      document.getElementById('new-assignment-desc').value = '';
+      await loadAssignments();
+    }
+
+
+    // --- NOTES & STUDY STUDIO ---
+    async function loadNotes() {
+      try {
+        const res = await fetch('/api/notes');
+        notes = await res.json();
+        document.getElementById('notes-count-badge').textContent = notes.length;
+
+        const listContainer = document.getElementById('notes-list');
+        if (!notes.length) {
+          listContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No notes created yet.</p>`;
+          return;
+        }
+
+        listContainer.innerHTML = notes.map(n => `
+          <div onclick="selectNote(${n.id})" class="p-3 rounded-xl bg-slate-900 border ${selectedNote && selectedNote.id === n.id ? 'border-indigo-500 bg-slate-800' : 'border-slate-800 hover:border-slate-700'} cursor-pointer transition">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-semibold uppercase text-slate-400">${n.course_name}</span>
+              <span class="text-[10px] text-slate-500">${new Date(n.created_at).toLocaleDateString()}</span>
+            </div>
+            <h4 class="font-medium text-slate-200 text-xs truncate">${n.title}</h4>
+          </div>
+        `).join('');
+
+        if (notes.length > 0 && !selectedNote) {
+          selectNote(notes[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load notes:", err);
+      }
+    }
+
+    async function selectNote(noteId) {
+      try {
+        const res = await fetch(`/api/notes/${noteId}`);
+        selectedNote = await res.json();
+        loadNotes();
+        renderNoteDetail(selectedNote);
+      } catch (err) {
+        console.error("Failed to select note:", err);
+      }
+    }
+
+    function renderNoteDetail(note) {
+      const pane = document.getElementById('note-detail-pane');
+      const flashcardsHtml = (note.study_items || []).map((card, idx) => `
+        <div class="perspective-1000 cursor-pointer h-40" onclick="this.firstElementChild.classList.toggle('rotate-y-180')">
+          <div class="relative w-full h-full transition-transform duration-500 transform-style-3d bg-slate-900 border border-slate-800 rounded-2xl shadow-lg p-4 flex flex-col justify-between">
+            <!-- Front -->
+            <div class="absolute inset-0 backface-hidden p-5 flex flex-col justify-between rounded-2xl bg-slate-900">
+              <div class="flex items-center justify-between text-xs text-indigo-400">
+                <span class="font-bold">Card #${idx + 1}</span>
+                <span class="text-[11px] text-slate-500"><i class="fa-solid fa-arrows-rotate"></i> Flip</span>
+              </div>
+              <p class="text-sm font-medium text-slate-100 my-auto text-center">${card.question}</p>
+              <div class="text-[10px] text-slate-500 text-center">Click to reveal answer</div>
+            </div>
+            <!-- Back -->
+            <div class="absolute inset-0 backface-hidden rotate-y-180 p-5 flex flex-col justify-between rounded-2xl bg-indigo-950/80 border border-indigo-700/50">
+              <div class="flex items-center justify-between text-xs text-emerald-400 font-bold">
+                <span>Answer</span>
+                <span class="text-[11px] text-indigo-300"><i class="fa-solid fa-arrows-rotate"></i> Flip</span>
+              </div>
+              <p class="text-xs text-slate-200 my-auto text-center">${card.answer}</p>
+              <div class="text-[10px] text-indigo-300/60 text-center">Active Recall</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      pane.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-300 text-xs font-semibold border border-indigo-800">${note.course_name}</span>
+                <span class="text-xs text-slate-400">${new Date(note.created_at).toLocaleDateString()}</span>
+              </div>
+              <h2 class="text-xl font-bold text-white">${note.title}</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="/api/notes/${note.id}/export-google-doc" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-brands fa-google text-indigo-400"></i> Google Docs Export
+              </a>
+              <button onclick="generateFlashcardsForNote(${note.id})" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-bolt"></i> Generate More Cards
+              </button>
+            </div>
+          </div>
+
+          ${note.summary ? `
+            <div class="bg-indigo-950/30 border border-indigo-800/60 rounded-2xl p-5 space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+                <i class="fa-solid fa-sparkles"></i> AI Executive Summary
+              </h3>
+              <div class="text-sm text-slate-200 markdown-body">${marked.parse(note.summary)}</div>
+            </div>
+          ` : ''}
+
+          <div>
+            <h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-purple-400"></i> Active Recall Flashcards (${(note.study_items || []).length})
+            </h3>
+            ${(note.study_items || []).length ? `
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${flashcardsHtml}
+              </div>
+            ` : `
+              <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center text-xs text-slate-400">
+                No flashcards yet. Click "Generate More Cards" to have Gemini create active recall flashcards.
+              </div>
+            `}
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Full Lecture Content</h3>
+            <div class="text-sm text-slate-300 font-mono whitespace-pre-wrap bg-slate-950 p-4 rounded-xl border border-slate-800">${note.content}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function generateFlashcardsForNote(noteId) {
+      try {
+        const res = await fetch(`/api/notes/${noteId}/generate-flashcards`, { method: 'POST' });
+        const data = await res.json();
+        alert(`Generated ${data.count} flashcards!`);
+        await selectNote(noteId);
+      } catch (err) {
+        alert("Failed to generate flashcards: " + err.message);
+      }
+    }
+
+    // Modal: New Note
+    function openNewNoteModal() {
+      document.getElementById('modal-new-note').classList.remove('hidden');
+    }
+    function closeNewNoteModal() {
+      document.getElementById('modal-new-note').classList.add('hidden');
+    }
+    async function handleCreateNote(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-note');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing with Gemini...`;
+
+      const title = document.getElementById('new-note-title').value;
+      const course_id = document.getElementById('new-note-course').value || null;
+      const content = document.getElementById('new-note-content').value;
+      const autoSummarize = document.getElementById('note-auto-summarize').checked;
+
+      let summaryText = '';
+      let tags = 'lecture';
+
+      if (autoSummarize) {
+        try {
+          const sumRes = await fetch('/api/notes/summarize-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, course_id, generate_flashcards: true })
+          });
+          const sumData = await sumRes.json();
+          summaryText = sumData.summary || '';
+          tags = sumData.tags || 'lecture';
+        } catch (err) {
+          console.error("Summarize error:", err);
+        }
+      }
+
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, course_id, content, tags })
+      });
+      const newNote = await res.json();
+
+      if (autoSummarize && newNote.id) {
+        await fetch(`/api/notes/${newNote.id}/generate-flashcards`, { method: 'POST' });
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Process & Save Note`;
+      closeNewNoteModal();
+      document.getElementById('new-note-title').value = '';
+      document.getElementById('new-note-content').value = '';
+      await loadNotes();
+      selectNote(newNote.id);
+    }
+
+
+    // --- MOODLE AUTOMATION & SYNC ---
+    async function launchMoodleBrowser() {
+      const btn = document.getElementById('btn-launch-browser');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Opening Browser...`;
+
+      try {
+        const res = await fetch('/api/moodle/login-browser', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message || (data.success ? "Browser session saved!" : "Failed to open browser"));
+      } catch (err) {
+        alert("Error launching browser: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square text-orange-400"></i> Launch Browser & Log In`;
+      }
+    }
+
+    async function runMoodleSync() {
+      const btn = document.getElementById('btn-run-sync');
+      const statusDiv = document.getElementById('moodle-sync-status');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Scraping Moodle & Forum Posts...`;
+      statusDiv.classList.remove('hidden');
+      statusDiv.innerHTML = `<p class="flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Scraping courses, grades overview, and analyzing teacher announcements with Gemini AI...</p>`;
+
+      try {
+        const res = await fetch('/api/moodle/sync', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success) {
+          statusDiv.innerHTML = `
+            <div class="text-emerald-400 font-semibold mb-1"><i class="fa-solid fa-circle-check"></i> Sync & AI Extraction Complete!</div>
+            <p>Synced ${data.courses_synced} courses and ${data.assignments_synced} deliverables (including AI-extracted tasks from announcements).</p>
+          `;
+          await loadCourses();
+          await loadAssignments();
+          await loadGradesOverview();
+        } else {
+          statusDiv.innerHTML = `
+            <div class="text-rose-400 font-semibold mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Sync Failed</div>
+            <p>${data.error || 'Could not complete scrape.'}</p>
+          `;
+        }
+      } catch (err) {
+        statusDiv.innerHTML = `<p class="text-rose-400">Error: ${err.message}</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-rotate text-indigo-200"></i> Run Auto Sync Now`;
+      }
+    }
+
+    async function saveAndSyncIcal() {
+      const url = document.getElementById('moodle-ical-input').value.trim();
+      if (!url) return alert("Please enter your Moodle iCal URL.");
+
+      const btn = document.getElementById('btn-sync-ical');
+      const statusDiv = document.getElementById('moodle-sync-status');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Syncing...`;
+
+      try {
+        await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ moodle_ical_url: url })
+        });
+
+        const res = await fetch('/api/moodle/sync-ical', { method: 'POST' });
+        const data = await res.json();
+
+        statusDiv.classList.remove('hidden');
+        if (data.success) {
+          statusDiv.innerHTML = `
+            <div class="text-emerald-400 font-semibold mb-1"><i class="fa-solid fa-circle-check"></i> iCal Calendar Synced!</div>
+            <p>Imported ${data.added_count} upcoming activities and matched them to your enrolled courses.</p>
+          `;
+          await loadAssignments();
+        } else {
+          statusDiv.innerHTML = `<p class="text-rose-400">${data.error}</p>`;
+        }
+      } catch (err) {
+        alert("iCal Sync Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Sync Feed`;
+      }
+    }
+
+
+    // --- CHAT ASSISTANT & MULTIMODAL ---
+    async function loadChatHistory() {
+      try {
+        const res = await fetch('/api/chat/history');
+        const messages = await res.json();
+        const container = document.getElementById('chat-messages');
+        
+        const greeting = container.firstElementChild;
+        container.innerHTML = '';
+        if (greeting) container.appendChild(greeting);
+
+        messages.forEach(m => appendChatMessage(m.role, m.content));
+      } catch (err) {
+        console.error("Failed to load chat history:", err);
+      }
+    }
+
+    function appendChatMessage(role, content) {
+      const container = document.getElementById('chat-messages');
+      const isUser = role === 'user';
+
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex items-start space-x-4 max-w-3xl ${isUser ? 'ml-auto flex-row-reverse space-x-reverse' : ''}`;
+
+      const avatar = isUser ? `
+        <div class="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white flex-shrink-0 shadow">
+          <i class="fa-solid fa-user text-sm"></i>
+        </div>
+      ` : `
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow">
+          <i class="fa-solid fa-robot text-sm"></i>
+        </div>
+      `;
+
+      const bubbleClass = isUser 
+        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-none p-4 text-sm shadow-md'
+        : 'bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none p-4 text-slate-200 text-sm shadow-md markdown-body';
+
+      msgDiv.innerHTML = `
+        ${avatar}
+        <div class="${bubbleClass}">
+          ${isUser ? `<p class="whitespace-pre-wrap">${content}</p>` : marked.parse(content)}
+        </div>
+      `;
+
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      if (!message && !currentAttachedFile) return;
+
+      input.value = '';
+      appendChatMessage('user', message || (currentAttachedFile ? `Attached: ${currentAttachedFile.name}` : ''));
+
+      const container = document.getElementById('chat-messages');
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typing-indicator';
+      typingDiv.className = 'flex items-center space-x-3 text-slate-500 text-xs pl-12';
+      typingDiv.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-indigo-400"></i> Consulting academic records & schedule...`;
+      container.appendChild(typingDiv);
+      container.scrollTop = container.scrollHeight;
+
+      const formData = new FormData();
+      formData.append('message', message);
+      if (currentAttachedFile) {
+        formData.append('file', currentAttachedFile);
+      }
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        
+        typingDiv.remove();
+        appendChatMessage('assistant', data.reply);
+        removeAttachedFile();
+      } catch (err) {
+        typingDiv.remove();
+        appendChatMessage('assistant', `⚠️ Error: ${err.message}`);
+      }
+    }
+
+    function sendQuickPrompt(text) {
+      document.getElementById('chat-input').value = text;
+      document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+
+    async function clearChatHistory() {
+      if (!confirm("Clear chat history?")) return;
+      await fetch('/api/chat/history', { method: 'DELETE' });
+      await loadChatHistory();
+    }
+
+    function handleFileSelected(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentAttachedFile = file;
+      document.getElementById('file-attachment-name').textContent = file.name;
+      document.getElementById('file-attachment-preview').classList.remove('hidden');
+    }
+
+    function removeAttachedFile() {
+      currentAttachedFile = null;
+      document.getElementById('chat-file-input').value = '';
+      document.getElementById('file-attachment-preview').classList.add('hidden');
+    }
+
+
+    // --- EMAIL DRAFTER MODAL ---
+    function openEmailModal() {
+      document.getElementById('modal-email').classList.remove('hidden');
+    }
+    function closeEmailModal() {
+      document.getElementById('modal-email').classList.add('hidden');
+      document.getElementById('email-output-container').classList.add('hidden');
+    }
+
+    async function handleGenerateEmail(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-generate-email');
+      btn.disabled = true;
+      btn.textContent = 'Generating with Gemini...';
+
+      const payload = {
+        professor_name: document.getElementById('email-prof-name').value,
+        course_name: document.getElementById('email-course-name').value,
+        purpose: document.getElementById('email-purpose').value,
+        tone: document.getElementById('email-tone').value,
+        details: document.getElementById('email-details').value
+      };
+
+      try {
+        const res = await fetch('/api/chat/draft-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        document.getElementById('email-output').textContent = data.draft;
+        document.getElementById('email-output-container').classList.remove('hidden');
+      } catch (err) {
+        alert("Failed to draft email: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Draft';
+      }
+    }
+
+    function copyGeneratedEmail() {
+      const text = document.getElementById('email-output').textContent;
+      navigator.clipboard.writeText(text);
+      alert("Copied email draft to clipboard!");
+    }
+  </script>
+</body>
+</html>

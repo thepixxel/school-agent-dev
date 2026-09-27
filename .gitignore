@@ -1,0 +1,32 @@
+# Environment & Secrets
+.env
+*.env.local
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Playwright & Browser Sessions (Prevents leaking login session cookies/passwords)
+data/browser_profile/
+data/playwright_profile/
+data/moodle_auth.json
+data/debug_screens/
+
+# Local SQLite Database & Exports
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+*.ics
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
